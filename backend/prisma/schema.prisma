@@ -1,0 +1,207 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      UserRole @default(USER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  devices    Device[]
+  auditLogs  AuditLog[]
+  alerts     Alert[]
+  @@map("users")
+}
+model Device {
+  id              String         @id @default(uuid())
+  name            String
+  type            DeviceType
+  ipAddress       String
+  macAddress      String         @unique
+  manufacturer    String?
+  model           String?
+  firmwareVersion String?
+  osVersion       String?
+  status          DeviceStatus   @default(OFFLINE)
+  lastSeen        DateTime?
+  registeredAt    DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  securityScore   Float?         @default(0)
+  riskLevel       RiskLevel      @default(UNKNOWN)
+  ownerId         String
+  owner           User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  telemetry       DeviceTelemetry[]
+  scans           VulnerabilityReport[]
+  alerts          Alert[]
+  firmwareUpdates FirmwareUpdate[]
+  logs            DeviceLog[]
+  @@map("devices")
+}
+model DeviceTelemetry {
+  id          String   @id @default(uuid())
+  deviceId    String
+  timestamp   DateTime @default(now())
+  cpuUsage    Float?
+  memoryUsage Float?
+  diskUsage   Float?
+  temperature Float?
+  networkIn   Float?
+  networkOut  Float?
+  customData  Json?
+  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  @@map("device_telemetry")
+  @@index([deviceId, timestamp])
+}
+model VulnerabilityReport {
+  id          String            @id @default(uuid())
+  deviceId    String
+  scanType    ScanType
+  status      ScanStatus        @default(PENDING)
+  startedAt   DateTime          @default(now())
+  completedAt DateTime?
+  criticalCount Int             @default(0)
+  highCount     Int             @default(0)
+  mediumCount   Int             @default(0)
+  lowCount      Int             @default(0)
+  findings    Json?
+  device      Device            @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  @@map("vulnerability_reports")
+  @@index([deviceId, startedAt])
+}
+model Alert {
+  id          String      @id @default(uuid())
+  deviceId    String?
+  userId      String?
+  type        AlertType
+  severity    AlertSeverity
+  title       String
+  description String
+  status      AlertStatus @default(ACTIVE)
+  createdAt   DateTime    @default(now())
+  resolvedAt  DateTime?
+  metadata    Json?
+  device      Device?     @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  user        User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("alerts")
+  @@index([createdAt, status])
+}
+model FirmwareUpdate {
+  id          String             @id @default(uuid())
+  deviceId    String
+  version     String
+  fileName    String
+  fileSize    Int
+  checksum    String
+  status      FirmwareStatus     @default(PENDING)
+  uploadedAt  DateTime           @default(now())
+  deployedAt  DateTime?
+  device      Device             @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  @@map("firmware_updates")
+}
+model AuditLog {
+  id        String     @id @default(uuid())
+  userId    String
+  action    String
+  resource  String
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  timestamp DateTime   @default(now())
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("audit_logs")
+  @@index([timestamp, action])
+}
+model DeviceLog {
+  id        String    @id @default(uuid())
+  deviceId  String
+  level     LogLevel
+  message   String
+  source    String?
+  timestamp DateTime  @default(now())
+  device    Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  @@map("device_logs")
+  @@index([deviceId, timestamp])
+}
+enum UserRole {
+  ADMIN
+  USER
+}
+enum DeviceType {
+  SENSOR
+  CAMERA
+  GATEWAY
+  ACTUATOR
+  CONTROLLER
+  OTHER
+}
+enum DeviceStatus {
+  ONLINE
+  OFFLINE
+  MAINTENANCE
+  ERROR
+}
+enum RiskLevel {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  UNKNOWN
+}
+enum ScanType {
+  PORT_SCAN
+  VULNERABILITY_SCAN
+  NETWORK_SCAN
+  COMPLIANCE_SCAN
+}
+enum ScanStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+enum AlertType {
+  SECURITY_BREACH
+  DEVICE_OFFLINE
+  HIGH_CPU_USAGE
+  HIGH_MEMORY_USAGE
+  ANOMALY_DETECTED
+  VULNERABILITY_FOUND
+  FIRMWARE_OUTDATED
+  AUTHENTICATION_FAILURE
+  NETWORK_INTRUSION
+}
+enum AlertSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+enum AlertStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  RESOLVED
+  IGNORED
+}
+enum FirmwareStatus {
+  PENDING
+  DOWNLOADING
+  DEPLOYING
+  COMPLETED
+  FAILED
+}
+enum LogLevel {
+  ERROR
+  WARN
+  INFO
+  DEBUG
+}

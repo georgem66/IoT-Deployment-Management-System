@@ -1,0 +1,10 @@
+{
+  "device_id": "iot-device-example",
+  "server_url": "http://localhost:3000",
+  "heartbeat_interval": 30,
+  "telemetry_interval": 60,
+  "api_token": "your-api-token-here",
+  "encryption_key": "",
+  "location": "Lab Environment",
+  "log_level": "INFO"
+}
