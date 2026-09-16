@@ -433,5 +433,5 @@ For server-to-server connections, you can use API keys instead of tokens:
 Using your API key is simple:
 
 ```bash
-curl -H "X-API-Key: your-api-key" http://your-server/api/devices
+curl -H "X-API-Key: $IOT_DEVICE_API_KEY" http://your-server/api/devices
 ```
