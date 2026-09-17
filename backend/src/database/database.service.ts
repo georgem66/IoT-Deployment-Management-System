@@ -8,7 +8,8 @@ export class DatabaseService extends PrismaClient implements OnModuleInit, OnMod
       await this.$connect();
       console.log('Database connection established successfully');
     } catch (error) {
-      console.error('Failed to connect to the database:', error);
+      // Do not expose connection details or accept requests without persistence.
+      throw new Error('Database connection failed; check DATABASE_URL and database availability');
     }
   }
 

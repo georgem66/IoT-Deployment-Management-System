@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { createJwtOptions } from './jwt.config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
@@ -10,13 +12,11 @@ import { UsersModule } from '../users/users.module';
 @Module({
   imports: [
     PassportModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'fallback-secret',
-      signOptions: { 
-        expiresIn: process.env.JWT_EXPIRATION || '24h',
-        issuer: 'iot-security-system',
-        audience: 'iot-users'
-      },
+    ConfigModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: createJwtOptions,
     }),
     UsersModule,
   ],
